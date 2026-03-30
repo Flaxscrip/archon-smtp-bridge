@@ -172,7 +172,18 @@ export class ReplyPoller {
     private async parseDmailAsReply(dmailCid: string): Promise<ParsedReply | null> {
         try {
             // Get DMail content
-            const dmail = await this.keymaster.getDmailMessage(dmailCid) as DmailContent | null;
+            let dmail: DmailContent | null;
+            try {
+                dmail = await this.keymaster.getDmailMessage(dmailCid) as DmailContent | null;
+            } catch (getDmailErr) {
+                const errMsg = getDmailErr instanceof Error ? getDmailErr.message : String(getDmailErr);
+                if (errMsg.includes('503') || errMsg.includes('<html>')) {
+                    console.log(`[Poller] Skipping ${dmailCid.slice(-12)} - gatekeeper unavailable`);
+                } else {
+                    console.error(`[Poller] Error getting DMail ${dmailCid.slice(-12)}:`, errMsg.slice(0, 100));
+                }
+                return null;
+            }
             
             if (!dmail) return null;
             
@@ -189,7 +200,7 @@ export class ReplyPoller {
             
             // METHOD 1: Check DID properties for bridge metadata
             try {
-                const resolved = await this.keymaster.resolveDID(dmailCid) as any;
+                const resolved = await this.keymaster.resolveDID(dmailCid, { confirm: false }) as any;
                 const data = resolved?.didDocumentData || {};
                 
                 if (data['bridge:reply-token']) {

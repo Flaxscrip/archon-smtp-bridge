@@ -1,0 +1,41 @@
+{
+  "name": "@archon-protocol/smtp-dmail-bridge",
+  "version": "0.3.0",
+  "description": "SMTP to DMail bridge - receive external emails as encrypted DMail messages",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "smtp-dmail-bridge": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "test": "node --test"
+  },
+  "keywords": ["archon", "smtp", "dmail", "email", "bridge", "did"],
+  "author": "Archon Protocol",
+  "license": "MIT",
+  "dependencies": {
+    "smtp-server": "^3.13.0",
+    "mailparser": "^3.7.1",
+    "nodemailer": "^6.9.0",
+    "sql.js": "^1.11.0",
+    "@didcid/keymaster": "^0.4.5",
+    "@didcid/gatekeeper": "^0.4.5",
+    "@didcid/cipher": "^0.2.5",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/smtp-server": "^3.5.10",
+    "@types/mailparser": "^3.4.4",
+    "@types/nodemailer": "^6.4.0",
+    "@types/sql.js": "^1.4.9",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

@@ -62,11 +62,18 @@ export class ReplyPoller {
                 await this.keymaster.refreshNotices();
             }
             catch (refreshErr) {
-                console.log('[Poller] Could not refresh notices (gatekeeper may be unavailable)');
+                console.log('[Poller] Could not refresh notices:', refreshErr instanceof Error ? refreshErr.message : String(refreshErr).slice(0, 100));
                 // Continue anyway - we can still check existing dmails
             }
             // List all dmails (returns Record<dmailDid, DmailItem>)
-            const dmailMap = await this.keymaster.listDmail();
+            let dmailMap;
+            try {
+                dmailMap = await this.keymaster.listDmail();
+            }
+            catch (listErr) {
+                console.error('[Poller] Could not list dmails:', listErr instanceof Error ? listErr.message : String(listErr).slice(0, 100));
+                return 0;
+            }
             for (const [dmailDid, dmail] of Object.entries(dmailMap)) {
                 // Skip already processed
                 if (this.processedDmails.has(dmailDid))
@@ -93,7 +100,14 @@ export class ReplyPoller {
             }
         }
         catch (error) {
-            console.error('[Poller] Error during poll:', error);
+            const errMsg = error instanceof Error ? error.message : String(error);
+            // Truncate HTML error responses
+            if (errMsg.includes('<html>')) {
+                console.error('[Poller] Error during poll: Gatekeeper unavailable (503)');
+            }
+            else {
+                console.error('[Poller] Error during poll:', errMsg.slice(0, 200));
+            }
         }
         finally {
             this.running = false;

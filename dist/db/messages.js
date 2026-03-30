@@ -162,6 +162,48 @@ export class MessageStore {
         return results[0];
     }
     /**
+     * Find inbound message by recipient DID and subject match
+     * Used for smart reply matching without explicit token
+     */
+    findByRecipientAndSubject(archonDid, subject) {
+        // Normalize subject: remove Re:, Fwd:, [Email] prefix
+        const normalizedSubject = subject
+            .replace(/^(re|fwd|fw):\s*/gi, '')
+            .replace(/^\[email\]\s*/gi, '')
+            .trim()
+            .toLowerCase();
+        // Find recent inbound messages to this DID
+        const results = this.queryAll(`
+            SELECT * FROM messages 
+            WHERE archon_did = ? AND direction = 'inbound' AND status = 'sent'
+            ORDER BY received_at DESC LIMIT 20
+        `, [archonDid]);
+        // Match by normalized subject
+        for (const msg of results) {
+            const msgSubject = (msg.subject || '')
+                .replace(/^(re|fwd|fw):\s*/gi, '')
+                .replace(/^\[email\]\s*/gi, '')
+                .trim()
+                .toLowerCase();
+            if (msgSubject === normalizedSubject) {
+                return msg;
+            }
+        }
+        return undefined;
+    }
+    /**
+     * Find most recent inbound message to a specific DID
+     * Fallback when subject doesn't match
+     */
+    findRecentByRecipient(archonDid) {
+        const results = this.queryAll(`
+            SELECT * FROM messages 
+            WHERE archon_did = ? AND direction = 'inbound' AND status = 'sent'
+            ORDER BY received_at DESC LIMIT 1
+        `, [archonDid]);
+        return results[0];
+    }
+    /**
      * Find thread by external email and archon name
      */
     findThread(externalEmail, archonName) {

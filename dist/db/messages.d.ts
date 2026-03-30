@@ -58,6 +58,16 @@ export declare class MessageStore {
      */
     getLastInboundForThread(threadId: string): MessageRecord | undefined;
     /**
+     * Find inbound message by recipient DID and subject match
+     * Used for smart reply matching without explicit token
+     */
+    findByRecipientAndSubject(archonDid: string, subject: string): MessageRecord | undefined;
+    /**
+     * Find most recent inbound message to a specific DID
+     * Fallback when subject doesn't match
+     */
+    findRecentByRecipient(archonDid: string): MessageRecord | undefined;
+    /**
      * Find thread by external email and archon name
      */
     findThread(externalEmail: string, archonName: string | null): ThreadRecord | undefined;

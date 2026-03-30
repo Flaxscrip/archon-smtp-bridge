@@ -139,7 +139,7 @@ export class ReplyPoller {
             catch (e) {
                 // Properties not available, continue to fallback
             }
-            // METHOD 2: Fallback to subject/body parsing
+            // METHOD 2: Fallback to subject/body parsing for token
             if (!toEmail) {
                 const tokenMatch = dmail.subject?.match(/\[?REPLY[:\-]?\s*([A-Za-z0-9_-]{6,12})\]?/i) ||
                     dmail.body?.match(/\[?REPLY[:\-]?\s*([A-Za-z0-9_-]{6,12})\]?/i);
@@ -150,6 +150,27 @@ export class ReplyPoller {
                         toEmail = originalMessage.external_email;
                         threadId = originalMessage.thread_id;
                         console.log(`[Poller] Found reply via body parsing: token=${replyToken} → ${toEmail}`);
+                    }
+                }
+            }
+            // METHOD 3: Smart matching by sender DID + subject
+            if (!toEmail) {
+                const senderDid = dmail.from;
+                const subject = dmail.subject || '';
+                // Try to match by subject
+                originalMessage = this.messageStore.findByRecipientAndSubject(senderDid, subject);
+                if (originalMessage) {
+                    toEmail = originalMessage.external_email;
+                    threadId = originalMessage.thread_id;
+                    console.log(`[Poller] Found reply via subject match: "${subject}" → ${toEmail}`);
+                }
+                else {
+                    // Fallback: most recent message to this sender
+                    originalMessage = this.messageStore.findRecentByRecipient(senderDid);
+                    if (originalMessage) {
+                        toEmail = originalMessage.external_email;
+                        threadId = originalMessage.thread_id;
+                        console.log(`[Poller] Found reply via recent conversation: ${senderDid} → ${toEmail}`);
                     }
                 }
             }

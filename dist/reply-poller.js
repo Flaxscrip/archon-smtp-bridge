@@ -98,6 +98,14 @@ export class ReplyPoller {
                         await this.onReply(reply);
                         processed++;
                         this.messageStore.markDmailSeen(dmailDid, true); // Mark as reply
+                        // Archive the DMail after successful processing
+                        try {
+                            await this.keymaster.fileDmail(dmailDid, ['archived']);
+                            console.log(`[Poller] Archived processed reply ${dmailDid.slice(-12)}`);
+                        }
+                        catch (archiveErr) {
+                            console.log(`[Poller] Could not archive ${dmailDid.slice(-12)}`);
+                        }
                     }
                     catch (err) {
                         console.error(`[Poller] Error handling reply:`, err);

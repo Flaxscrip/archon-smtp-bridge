@@ -332,5 +332,47 @@ export class MessageStore {
         result.threads = threadResult[0]?.values[0]?.[0] || 0;
         return result;
     }
+    // ─────────────────────────────────────────────────────────────
+    // SEEN DMAILS (for poller efficiency)
+    // ─────────────────────────────────────────────────────────────
+    /**
+     * Check if a DMail has already been checked by the poller
+     */
+    isDmailSeen(dmailCid) {
+        try {
+            const result = this.db.exec('SELECT 1 FROM seen_dmails WHERE dmail_cid = ? LIMIT 1', [dmailCid]);
+            return result.length > 0 && result[0].values.length > 0;
+        }
+        catch (e) {
+            return false;
+        }
+    }
+    /**
+     * Mark a DMail as seen (checked by poller)
+     */
+    markDmailSeen(dmailCid, isReply = false) {
+        try {
+            this.db.run(`
+                INSERT OR REPLACE INTO seen_dmails (dmail_cid, checked_at, is_reply)
+                VALUES (?, ?, ?)
+            `, [dmailCid, new Date().toISOString(), isReply ? 1 : 0]);
+            this.scheduleSave();
+        }
+        catch (e) {
+            // Ignore errors (table might not exist in old DBs)
+        }
+    }
+    /**
+     * Get count of seen DMails
+     */
+    getSeenCount() {
+        try {
+            const result = this.db.exec('SELECT COUNT(*) FROM seen_dmails');
+            return result[0]?.values[0]?.[0] || 0;
+        }
+        catch (e) {
+            return 0;
+        }
+    }
 }
 //# sourceMappingURL=messages.js.map

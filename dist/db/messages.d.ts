@@ -95,5 +95,17 @@ export declare class MessageStore {
      */
     getPendingOutbound(limit?: number): MessageRecord[];
     getStats(): Record<string, number>;
+    /**
+     * Check if a DMail has already been checked by the poller
+     */
+    isDmailSeen(dmailCid: string): boolean;
+    /**
+     * Mark a DMail as seen (checked by poller)
+     */
+    markDmailSeen(dmailCid: string, isReply?: boolean): void;
+    /**
+     * Get count of seen DMails
+     */
+    getSeenCount(): number;
 }
 //# sourceMappingURL=messages.d.ts.map

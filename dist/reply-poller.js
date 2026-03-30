@@ -75,12 +75,18 @@ export class ReplyPoller {
                 return 0;
             }
             for (const [dmailDid, dmail] of Object.entries(dmailMap)) {
-                // Skip already processed
+                // Skip already processed (in-memory cache)
                 if (this.processedDmails.has(dmailDid))
                     continue;
-                // Skip if already in our database
+                // Skip if already seen (persistent DB check)
+                if (this.messageStore.isDmailSeen(dmailDid)) {
+                    this.processedDmails.add(dmailDid);
+                    continue;
+                }
+                // Skip if already in our database as a processed message
                 const existing = this.messageStore.getByDmailCid(dmailDid);
                 if (existing) {
+                    this.messageStore.markDmailSeen(dmailDid, false);
                     this.processedDmails.add(dmailDid);
                     continue;
                 }
@@ -91,10 +97,15 @@ export class ReplyPoller {
                     try {
                         await this.onReply(reply);
                         processed++;
+                        this.messageStore.markDmailSeen(dmailDid, true); // Mark as reply
                     }
                     catch (err) {
                         console.error(`[Poller] Error handling reply:`, err);
                     }
+                }
+                else {
+                    // Not a reply, mark as seen so we don't check again
+                    this.messageStore.markDmailSeen(dmailDid, false);
                 }
                 this.processedDmails.add(dmailDid);
             }

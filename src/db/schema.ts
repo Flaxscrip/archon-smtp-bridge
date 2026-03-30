@@ -149,6 +149,15 @@ export async function initDatabase(dbPath: string = './data/bridge.db'): Promise
         )
     `);
     
+    // Create seen_dmails table (for poller to skip already-checked DMails)
+    db.run(`
+        CREATE TABLE IF NOT EXISTS seen_dmails (
+            dmail_cid TEXT PRIMARY KEY,
+            checked_at TEXT NOT NULL,
+            is_reply INTEGER DEFAULT 0
+        )
+    `);
+    
     // Create indexes
     db.run(`CREATE INDEX IF NOT EXISTS idx_messages_status ON messages(status)`);
     db.run(`CREATE INDEX IF NOT EXISTS idx_messages_direction ON messages(direction)`);

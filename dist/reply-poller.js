@@ -58,7 +58,13 @@ export class ReplyPoller {
         let processed = 0;
         try {
             // Refresh inbox to get new dmails
-            await this.keymaster.refreshNotices();
+            try {
+                await this.keymaster.refreshNotices();
+            }
+            catch (refreshErr) {
+                console.log('[Poller] Could not refresh notices (gatekeeper may be unavailable)');
+                // Continue anyway - we can still check existing dmails
+            }
             // List all dmails (returns Record<dmailDid, DmailItem>)
             const dmailMap = await this.keymaster.listDmail();
             for (const [dmailDid, dmail] of Object.entries(dmailMap)) {
@@ -154,7 +160,7 @@ export class ReplyPoller {
                 }
             }
             // METHOD 3: Smart matching by sender DID + subject
-            if (!toEmail) {
+            if (!toEmail && dmail.from) {
                 const senderDid = dmail.from;
                 const subject = dmail.subject || '';
                 // Try to match by subject
